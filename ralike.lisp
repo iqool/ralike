@@ -1,6 +1,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; R-alike. Statistisches Werkzeug. Inspiriert von R ;;;;
-;;;; Patrick Krusenotto August 2016                    ;;;;
+;;;; R-alike. statistical tool. inspired by  R         ;;;;
+;;;; Patrick Krusenotto, August 2016                    ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (in-package #:ralike)
@@ -40,7 +40,7 @@
           for item in line
           collect (funcall f item))))
 
-;;;; Text- and Logfile-Processing
+;;;; text- and logfile-processing
 
 (defun read-textfile (name)
   (with-open-file (s name)
@@ -52,7 +52,7 @@
 (defparameter *testline* "64.242.88.10 - - [07/Mar/2004:17:53:45 -0800] \"GET /twiki/bin/search/Main/SearchResult?scope=text®ex=on&search=Office%20*Locations[^A-Za-z] HTTP/1.1\" 200 7771")
 
 (defun parse-common-logformat (line)
-  ;; FIXIT: Voll Lahm! nur 4000/s
+  ;; FIXIT: Lame! Only 4000/s
   (cl-ppcre:register-groups-bind (ip x y date method url prot response size)
 ;      ("([\\.\\d]+)\\s(.+?)\\s(.+?)\\s\\[(.*?)\\]\\s\\\"(\\S+)\\s(.*?)\\s(\\S+)\\\"\\s(\\d+)\\s(\\d+)" line)
       ("(.+?)\\s(.+?)\\s(.+?)\\s\\[(.*?)\\]\\s\\\"(\\S+)\\s(.*?)\\s(\\S+)\\\"\\s(\\d+)\\s(\\d+)" line)
@@ -61,7 +61,7 @@
 (defun parse-common-logfile (filename)
   (mapcar #'parse-common-logformat (read-textfile filename)))
 
-;;;; Statistical Basics
+;;;; statistical basics
 
 (defun mean (a)
   (/ (etypecase a
@@ -76,7 +76,7 @@
 ;;;; Statistical Summary
 
 (defun calc-summary (list)
-  "Statistische Zusammenfassung einer Zahlenreihe"
+  "Statistical summary of a list of numbers"
   (let* ((sorted (sort (copy-list list) #'<))
         (n (length list))
         (mean (/ (apply #'+ list) n)))   ; mean
@@ -91,7 +91,7 @@
             (sqrt (/ (loop for x in list sum (* (- x mean) (- x mean))) n))))) ;stddev
 
 (defun summary (list &optional multiline)
-  "Ergebnisse von CALC-SUMMARY formatiert ausgeben"
+  "formated output of  CALC-SUMMARY's results"
   (multiple-value-bind (n sum min first median third max mean sdev)
       (calc-summary list)
     (if multiline
@@ -104,11 +104,11 @@
          "n ~d  Σ ~a  Mean ~a  Min ~a  1stQ ~a  Median ~a  3rdQ ~a  Max ~a σ ~a"
          n sum mean min first median third max sdev))))
 
-(defun calc-chart (lst)
-  "Erstellt einen Chart der Elemente aus LST"
+(defun calc-chart (lst &optional (f #'identity))
+  "make a chart of the elements of a list"
   (let ((htab (make-hash-table :test #'equal))
         (chart))
-    (mapc (lambda (x) (incf (gethash x htab 0))) lst)
+    (mapc (lambda (x) (incf (gethash (funcall f x) htab 0))) lst)
     (maphash (lambda (k v) (setf chart (cons (list v k) chart))) htab)
     (sort chart (lambda (a b) (> (car a) (car b))))))
 
@@ -116,8 +116,7 @@
   (cadar (calc-chart list)))
 
 (defun calc-equidist-hist (l a b n)
-  "Erstellt ein Histogramm aus n Intervallen im Bereich von a bis b
-   aus der Liste l"
+  "create a histogramm from list l consisting of n intervals im the range of a bis b"
   (let ((d (/ (- b a) n))
         (h (make-array n)))
     (dolist (x l)
@@ -131,10 +130,8 @@
 ;;;; Linear Regression
 
 (defun linear-regression (pairs)
-  "Berechnet die lineare Regression zu einer Lisp-Liste von
-   Wertepaaren ((x1 y1) ....). Zurückgegben werden der Achsenabschnitt
-   n, die Steigung m, der Korrelationskoeffizient r und die
-   Lisp-Funktion der Korelations-Geraden. Sie lautet y = mx + n"
+  "calculate a linear regression from a list of pairs ((x1 y1).
+   return n and m for y = mx+n and a lisp-function for f."
   (multiple-value-bind (n mx my)
       (loop for p in pairs
          sum (first p) into xs
